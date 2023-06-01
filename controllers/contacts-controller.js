@@ -9,10 +9,14 @@ const ctrlWrapper = require("../decorators/ctrlWrapper");
 const contactSchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
-  phone: Joi.string().required(),
+  phone: Joi.string()
+    .pattern(/^\+380-\d{2}-\d{3}-\d{2}-\d{2}$/)
+    .required(),
 }).messages({
   "any.required": "{{#label}} field is required.",
   "string.email": "Invalid email format.",
+  "string.pattern.base":
+    "Invalid phone format. Please use the format '+380-XX-XXX-XX-XX'.",
 });
 
 const getAllContacts = async (req, res) => {
