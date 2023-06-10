@@ -1,31 +1,21 @@
-const contactsServices = require("../models/contacts");
-
-const Joi = require("joi");
+const Contact = require("../models/contact");
 
 const { HttpError } = require("../helpers");
 
+const {
+  contactSchemaJoi,
+  contactUpdateFavoriteSchema,
+} = require("../schemasJoi");
+
 const ctrlWrapper = require("../decorators/ctrlWrapper");
 
-const contactSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().email().required(),
-  phone: Joi.string()
-    .pattern(/^\+380-\d{2}-\d{3}-\d{2}-\d{2}$/)
-    .required(),
-}).messages({
-  "any.required": "{{#label}} field is required.",
-  "string.email": "Invalid email format.",
-  "string.pattern.base":
-    "Invalid phone format. Please use the format '+380-XX-XXX-XX-XX'.",
-});
-
 const getAllContacts = async (req, res) => {
-  const result = await contactsServices.listContacts();
+  const result = await Contact.find();
   res.json(result);
 };
 const getContactsById = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contactsServices.getContactById(contactId);
+  const result = await Contact.findById(contactId);
   if (!result) {
     throw HttpError(404, "Not found");
   }
@@ -33,31 +23,52 @@ const getContactsById = async (req, res) => {
 };
 
 const addContact = async (req, res) => {
-  const { error } = contactSchema.validate(req.body);
+  const { error } = contactSchemaJoi.validate(req.body);
   if (error) {
-    throw HttpError(400, "Missing required name field");
+    const errorMessage = error.details[0].message;
+    throw HttpError(400, errorMessage);
   } else {
-    const result = await contactsServices.addContact(req.body);
+    const result = await Contact.create(req.body);
     res.status(201).json(result);
   }
 };
 
 const updateContact = async (req, res) => {
-  const { error } = contactSchema.validate(req.body);
+  console.log(req.body);
+  const { error } = contactSchemaJoi.validate(req.body);
   if (error) {
-    throw HttpError(400, "missing fields");
+    const errorMessage = error.details[0].message;
+    throw HttpError(400, errorMessage);
   }
   const { contactId } = req.params;
-  const result = await contactsServices.updateContact(contactId, req.body);
+  const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+    new: true,
+  });
   if (!result) {
     throw HttpError(404, error.message);
   }
   res.json(result);
 };
 
+const updateStatusContact = async (req, res) => {
+  console.log(req.body);
+  const { error } = contactUpdateFavoriteSchema.validate(req.body);
+  if (error) {
+    throw HttpError(400, "missing field favorite");
+  }
+  const { contactId } = req.params;
+  const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+    new: true,
+  });
+  if (!result) {
+    throw HttpError(404, "Not found");
+  }
+  res.json(result);
+};
+
 const deleteContactById = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contactsServices.removeContact(contactId);
+  const result = await Contact.findByIdAndDelete(contactId);
   if (!result) {
     throw HttpError(404, error.message);
   }
@@ -71,5 +82,6 @@ module.exports = {
   getContactsById: ctrlWrapper(getContactsById),
   addContact: ctrlWrapper(addContact),
   updateContact: ctrlWrapper(updateContact),
+  updateStatusContact: ctrlWrapper(updateStatusContact),
   deleteContactById: ctrlWrapper(deleteContactById),
 };
