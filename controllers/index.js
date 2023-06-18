@@ -1,3 +1,5 @@
 const contactsController = require("./contacts");
 
-module.exports = { contactsController };
+const authController = require("./users");
+
+module.exports = { contactsController, authController };
