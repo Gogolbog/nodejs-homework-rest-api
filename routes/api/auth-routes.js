@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const { authController } = require("../../controllers");
-const { authenticate } = require("../../middlewares");
+
+const { authenticate, upload } = require("../../middlewares");
 
 router.post("/register", authController.register);
 
@@ -17,6 +18,13 @@ router.patch(
   authenticate,
 
   authController.updateStatusSubscription
+);
+
+router.patch(
+  "/avatars",
+  authenticate,
+  upload.single("avatar"),
+  authController.loadAvatar
 );
 
 module.exports = router;
