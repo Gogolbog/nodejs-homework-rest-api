@@ -19,6 +19,10 @@ const login = async (req, res) => {
     throw HttpError(401, "Email or password is wrong");
   }
 
+  if (!user.verify) {
+    throw HttpError(404, "User not found");
+  }
+
   const { _id: id } = user;
 
   const payload = {
